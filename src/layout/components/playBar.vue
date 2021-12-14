@@ -3,25 +3,25 @@
     <div class="df flex1 singInfo">
       <!-- 音乐图片 -->
       <div class="pic mr10" @click="showLry">
-        <img :class="rotate&&'rotate'" :src="require('../../assets/images/music.jpg')">
+        <img :class="rotate&&'rotate'" :src="song.picUrl?song.picUrl:require('../../assets/images/music.jpg')">
         <i class="el-icon-arrow-up" />
       </div>
       <!-- 音乐名、歌手 -->
       <div class="sing">
-        <!-- <h4>最爱</h4> -->
-        <marquee :val="songTitle" />
-        <marquee class="singer" :val="songSinger" />
+        <marquee :val="song.title" />
+        <marquee2 class="singer" :val="song.artist?song.artist.join('/'):''" />
       </div>
       <!-- 喜欢 -->
-      <beatheat />
+      <beatheat :favorate="song.favorate" @changeBeat="changeBeat" />
     </div>
     <!-- 播放 -->
-    <playaudio :voice="voice" @imgRotate="imgRotate" />
+    <playaudio :voice="voice" :song="song" :playing="playing" :play-type="playType" @imgRotate="imgRotate" />
 
     <!-- 功能性按钮 -->
-    <div class="some-btn df flex1">
+    <div class="some-btn df">
       <!-- 音质 -->
-      <el-tag size="mini" effect="plain" class="quality">无损</el-tag>
+      <el-tag v-if="song.tone==='local'" size="mini" effect="plain" class="quality">本地</el-tag>
+      <el-tag v-else size="mini" effect="plain" class="quality">无损</el-tag>
       <!-- 音量 -->
       <div class="volume">
         <el-popover placement="top" popper-class="sound" trigger="hover" width="60px">
@@ -38,37 +38,89 @@
       </div>
       <!-- 列表 -->
       <div>
-        <img src="./images/duilie.svg" title="打开播放列表" @click="drawer?drawer=false:drawer=true">
+        <img src="./images/duilie.svg" title="打开播放列表" @click="drawerOpen">
       </div>
     </div>
-    <el-drawer title="当前播放" :visible.sync="drawer" class="songList" :modal="false" direction="rtl">
-      <span>我来啦!</span>
+    <el-drawer :visible.sync="drawer" size="40%" :show-close="false" :destroy-on-close="true" class="songList" custom-class="drawerContent" :modal="false" direction="rtl">
+      <div slot="title" class="df between">
+        <p>
+          <b>当前播放</b>
+          <i>共{{ songList.length }}首</i>
+        </p>
+        <el-button type="text" size="mini" @click="clearList">清空列表</el-button>
+      </div>
+      <div class="drawerBody">
+        <el-table ref="singleTable" :data="songList" highlight-current-row stripe :row-class-name="tableRowClassName" tooltip-effect="light" :show-header="false" size="small" style="width: 100%" @row-contextmenu="contextmenu" @row-dblclick="playChoose">
+          <el-table-column prop="title" label="音乐标题" sortable show-overflow-tooltip />
+          <el-table-column label="歌手" sortable show-overflow-tooltip>
+            <template slot-scope="scope">
+              <span v-for="(item,i) in scope.row.artist" :key="item">
+                {{ item }}
+                <i v-if="i!==scope.row.artist.length-1">/</i>
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="duration" label="时长" sortable width="70" />
+        </el-table>
+      </div>
     </el-drawer>
+    <!-- 右键菜单 -->
+    <ul v-show="isShow" id="menu" ref="menu2">
+      <li @click="menuClick(1)"><i class="el-icon-caret-right" /> 播放</li>
+      <li @click="menuClick(2)"><i class="el-icon-delete-solid" /> 删除</li>
+    </ul>
   </div>
 </template>
 <script>
 import beatheat from '@/components/Beatheart/beatheat'
 import playaudio from '@/components/Playaudio/playaudio'
 import marquee from '@/components/marquee'
+import marquee2 from '@/components/marquee2'
 export default {
-  components: { beatheat, playaudio, marquee },
+  components: { beatheat, playaudio, marquee, marquee2 },
   data() {
     return {
-      voice: 80,
+      voice: 100,
       drawer: false,
       rotate: false,
       playType: 0,
-      songTitle: '最爱',
-      songSinger: '阿梨粤'
+      songSinger: '',
+      songList: [],
+      isShow: false,
+      playing: false,
+      songIndex: 0,
+      first: true
     }
   },
-
+  computed: {
+    song() {
+      if (this.songList.length > 0) {
+        return this.songList[this.songIndex]
+      } else {
+        return {
+          favorate: false,
+          tone: false,
+          path: null,
+          size: 0,
+          picUrl: require('../../assets/images/music.jpg'),
+          title: '',
+          album: '',
+          duration: '0:00'
+        }
+      }
+    }
+  },
   mounted() {
+    this.songIndex = this.$playStore.getPlaysIndex()
+    this.songList = this.$playStore.getPlays()
+    this.playType = this.$playStore.getPlaysType()
   },
   methods: {
     imgRotate(bool) {
       this.rotate = bool
-      console.log(bool)
+    },
+    changeBeat() {
+      this.$playStore.editFavorate(this.song.id)
     },
     showLry() {
       // 歌词页面
@@ -79,6 +131,75 @@ export default {
       } else {
         this.playType += 1
       }
+      this.$playStore.savePlaysType(this.playType)
+    },
+    // 右键某一行
+    contextmenu(row, column, event) {
+      event.preventDefault()
+      const clientX = event.clientX
+      const clientY = event.clientY
+      // 改变自定义菜单的隐藏与显示
+      this.isShow = true
+      this.choose = row
+      // 根据事件对象中鼠标点击的位置，进行定位
+      this.$refs.menu2.style.left = clientX > 860 ? '860px' : clientX - 60 + 'px'
+      this.$refs.menu2.style.top = clientY + 'px'
+      document.addEventListener('click', this.addEvent, false)
+    },
+    // 监听事件
+    addEvent(e) {
+      if (!this.$refs.menu2.contains(e.target)) {
+        this.isShow = false
+        document.removeEventListener('click', this.addEvent, false)
+      }
+    },
+    // 右键选择
+    menuClick(key) {
+      this.isShow = false
+      document.removeEventListener('click', this.addEvent, false)
+      switch (key) {
+        // 播放
+        case 1:
+          this.setCurrent(this.choose.index)
+          this.$playStore.editPlaysIndex(this.choose.index)
+          this.songIndex = this.$playStore.getPlaysIndex()
+          this.first = false
+          break
+        // 删除
+        case 2:
+          this.$playStore.removePlays(this.choose.id)
+          this.songList = this.$playStore.getPlays()
+          break
+      }
+    },
+    // 双击播放
+    playChoose(row) {
+      this.setCurrent(row.index - 1)
+      this.$playStore.editPlaysIndex(row.index)
+      this.songIndex = this.$playStore.getPlaysIndex()
+      this.first = false
+      this.playing = true
+      console.log(row.index - 1)
+    },
+    // 清空播放列表
+    clearList() {
+      this.$playStore.clearPlays()
+      this.songList = this.$playStore.getPlays()
+      console.log(this.song)
+    },
+    // 打开播放列表
+    drawerOpen() {
+      this.drawer = !this.drawer
+      if (this.drawer) {
+        this.songList = this.$playStore.getPlays()
+      }
+    },
+    tableRowClassName({ row, rowIndex }) {
+      row.index = rowIndex
+    },
+    // 抽屉高亮
+    setCurrent(index) {
+      this.$refs.singleTable.setCurrentRow(this.songList[index + 1])
     }
   }
 }
@@ -159,6 +280,50 @@ export default {
   }
   .songList {
     bottom: 80px !important;
+  }
+  .drawerContent {
+    #el-drawer__title {
+      .df {
+        p {
+          b {
+            font-size: 16px;
+          }
+          i {
+            font-style: normal;
+            font-size: 12px;
+            color: @themeGray;
+            margin-left: 5px;
+          }
+        }
+      }
+    }
+    .drawerBody {
+      width: 100%;
+      height: 100%;
+      border-top: 1px solid @themeGray;
+    }
+  }
+  #menu {
+    box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    border: 1px solid #ebeef5;
+    width: 150px;
+    border-radius: 4px;
+    padding: 10px 0;
+    font-size: 14px;
+    box-sizing: border-box;
+    position: absolute;
+    z-index: 99999;
+    li {
+      padding: 5px 15px;
+      color: #303030;
+      &:hover {
+        background-color: #efefef;
+      }
+      i {
+        margin-right: 5px;
+      }
+    }
   }
 }
 </style>

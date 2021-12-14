@@ -1,21 +1,25 @@
 
 <template>
-  <div :class="beat?'heart heartAnimation':'heartl heart'" @click="changeHeart" />
+  <div :class="favorate?'heart heartAnimation':'heartl heart'" @click="changeHeart" />
 </template>
 <script>
 export default {
   name: 'Beatheart',
+  props: {
+    favorate: {
+      type: Boolean,
+      default: false
+    }
+  },
   data() {
     return {
-      beat: false
     }
   },
   mounted() {
   },
   methods: {
     changeHeart() {
-      this.beat = !this.beat
-      console.log(this.beat)
+      this.$emit('changeBeat', this.beat)
     }
   }
 }

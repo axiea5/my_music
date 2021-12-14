@@ -5,13 +5,15 @@ import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
+const DataStore = require('./store/PlayStore')
+const PlayStore = new DataStore({ name: 'Music Data' })
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win
 
 // Scheme must be registered before the app is ready
 protocol.registerSchemesAsPrivileged([
-  { scheme: 'app', privileges: { secure: true, standard: true } }
+  { scheme: 'app', privileges: { secure: true, standard: true }}
 ])
 
 async function createWindow() {
@@ -28,10 +30,13 @@ async function createWindow() {
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
       // nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
       nodeIntegration: true,
-      contextIsolation: false
+      contextIsolation: false,
+      webSecurity: false // 重要突破audio不能播放本地音乐的限制！！！
     }
   })
-
+  win.webContents.on('did-finish-load', () => {
+    win.send('getPlays', PlayStore.getPlays()) // 发送完成渲染事件
+  })
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
     await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL)
@@ -41,7 +46,6 @@ async function createWindow() {
     // Load the index.html when not in development
     win.loadURL('app://./index.html')
   }
-
   win.on('closed', () => {
     win = null
   })
@@ -70,7 +74,7 @@ if (process.platform === 'linux') {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
-app.on('ready', async () => {
+app.on('ready', async() => {
   if (isDevelopment && !process.env.IS_TEST) {
     // Install Vue Devtools
     try {
@@ -97,6 +101,9 @@ if (isDevelopment) {
   }
 }
 
+// 关闭窗口
 ipcMain.on('close-window', () => win.close())
+
+// 最小化窗口
 ipcMain.on('min-window', () => win.minimize())
-ipcMain.on('turnOnDevTool', () => win.webContents.openDevTools())
+

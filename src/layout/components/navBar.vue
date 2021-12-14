@@ -7,10 +7,10 @@
     <!-- 中间 -->
     <div class="center">
       <div class="go df">
-        <div>
+        <div @click="$router.go(-1)">
           <i class="el-icon-arrow-left" />
         </div>
-        <div>
+        <div @click="$router.go(1)">
           <i class="el-icon-arrow-right" />
         </div>
       </div>
