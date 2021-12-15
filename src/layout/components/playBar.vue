@@ -68,6 +68,7 @@
     <ul v-show="isShow" id="menu" ref="menu2">
       <li @click="menuClick(1)"><i class="el-icon-caret-right" /> 播放</li>
       <li @click="menuClick(2)"><i class="el-icon-delete-solid" /> 删除</li>
+      <li @click="menuClick(3)"><i class="el-icon-download" /> 下载</li>
     </ul>
   </div>
 </template>
@@ -179,7 +180,6 @@ export default {
       this.songIndex = this.$playStore.getPlaysIndex()
       this.first = false
       this.playing = true
-      console.log(row.index - 1)
     },
     // 清空播放列表
     clearList() {

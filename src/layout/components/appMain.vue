@@ -19,11 +19,11 @@ export default {
   data() {
     return {
       list: [
-        { icon: 'icon-bendi', text: '本地音乐', url: '/home' },
-        { icon: 'icon-vynil', text: '发现音乐', url: '/home' },
-        { icon: 'icon-shoucang', text: '我的收藏', url: '/home' },
-        { icon: 'icon-bofanggedan', text: '我的歌单', url: '/home' },
-        { icon: 'icon-xiazai', text: '下载管理', url: '/home' }
+        { icon: 'icon-bendi', text: '本地音乐', url: '/local_music' },
+        { icon: 'icon-vynil', text: '发现音乐', url: '/find_music' },
+        { icon: 'icon-shoucang', text: '我的收藏', url: '/collect_music' },
+        { icon: 'icon-bofanggedan', text: '我的歌单', url: '/list_music' },
+        { icon: 'icon-xiazai', text: '下载管理', url: '/load_music' }
       ],
       itemIndex: 0
     }

@@ -23,18 +23,24 @@
         <i class="el-icon-message" />
       </el-badge>
       <!-- 用户 -->
-      <div class="user center ">
-        <el-avatar size="small" class="avatar" :src="require('../../assets/images/avatar.png')" />
-        <el-dropdown trigger="click" size="small">
+      <div v-if="haslog" class="user center">
+        <el-avatar size="small" class="avatar" :src="userInfo.avatarUrl" />
+        <el-dropdown trigger="click" size="small" @command="handleCommand">
           <p class="el-dropdown-link">
-            <span>user</span><i class="el-icon-caret-bottom el-icon--right" />
+            <span>{{ userInfo.nickname }}</span><i class="el-icon-caret-bottom el-icon--right" />
           </p>
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item>个人信息</el-dropdown-item>
-            <el-dropdown-item>设置</el-dropdown-item>
-            <el-dropdown-item>退出</el-dropdown-item>
+            <el-dropdown-item command="info">个人信息</el-dropdown-item>
+            <el-dropdown-item command="set">设置</el-dropdown-item>
+            <el-dropdown-item command="out">退出</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
+      </div>
+      <div v-if="!haslog" class="user center">
+        <el-avatar size="small" class="avatar" :src="require('../../assets/images/avatar.png')" />
+        <p class="el-dropdown-link" @click="registerDialog=true">
+          <span>未登录</span><i class="el-icon-caret-bottom el-icon--right" />
+        </p>
       </div>
 
       <!-- 窗口操作 -->
@@ -44,19 +50,59 @@
         <!-- 关闭 -->
         <i class="el-icon-close" @click="closeWin" />
       </div>
+
+      <!-- 登录 -->
+      <el-dialog :visible.sync="registerDialog" :modal="false" custom-class="registerDialog" width="30%" center>
+        <div class="pic">
+          <img :src="require('../../assets/images/phone.png')">
+        </div>
+        <el-form ref="form" v-loading="loading" :model="form" :rules="rules" size="small" class="registerFrom">
+          <el-form-item prop="phone">
+            <el-input v-model="form.phone" prefix-icon="el-icon-mobile-phone" placeholder="请输入手机号" />
+          </el-form-item>
+          <el-form-item prop="password">
+            <el-input v-model="form.password" prefix-icon="el-icon-lock" placeholder="请输入密码" />
+          </el-form-item>
+        </el-form>
+        <span slot="footer" class="dialog-footer">
+          <el-button type="primary" size="small" @click="register">登录/注册</el-button>
+        </span>
+      </el-dialog>
     </div>
   </div>
 </template>
 <script>
 const { ipcRenderer } = window.require('electron')
+import { logout, checkPhone, login, account } from '@/api/index'
 export default {
   name: 'NavBar',
   data() {
     return {
-      search: ''
+      rules: {
+        phone: [
+          { required: true, message: '请输入手机号', trigger: 'blur' }
+        ],
+        password: [
+          { required: true, message: '请输入密码', trigger: 'blur' }
+        ]
+      },
+      search: '',
+      haslog: true,
+      registerDialog: false,
+      form: {
+        phone: '',
+        password: ''
+      },
+      loading: false,
+      userInfo: {}
     }
   },
-  mounted() {
+  created() {
+    this.haslog = Boolean(window.localStorage.getItem('status'))
+    if (this.haslog) {
+      this.userInfo.nickname = window.localStorage.getItem('nickname')
+      this.userInfo.avatarUrl = window.localStorage.getItem('avatarUrl')
+    }
   },
   methods: {
     minusWin() {
@@ -64,6 +110,60 @@ export default {
     },
     closeWin() {
       ipcRenderer.send('close-window')
+    },
+    // 退出
+    handleCommand(command) {
+      console.log(command)
+      switch (command) {
+        case 'out':
+          logout().then(res => {
+            if (res.code === 200) {
+              window.localStorage.removeItem('status')
+              this.haslog = false
+            }
+          })
+          break
+      }
+    },
+    register() {
+      this.$refs.form.validate((valid) => {
+        if (valid) {
+          this.loading = true
+          // 先验证该手机号有没有注册过
+          checkPhone({ phone: this.form.phone }).then(res => {
+            console.log(res)
+            // 注册过
+            if (res.hasPassword) {
+              login(this.form).then(res2 => {
+                console.log(res2)
+                if (res2.loginType === 1) {
+                  window.localStorage.setItem('status', 1)
+                  account().then(res3 => {
+                    console.log(res3)
+                    window.localStorage.setItem('nickname', res3.profile.nickname)
+                    window.localStorage.setItem('avatarUrl', res3.profile.avatarUrl)
+                    window.localStorage.setItem('userId', res3.profile.userId)
+                    this.$nextTick(() => {
+                      this.userInfo.nickname = res3.profile.nickname
+                      this.userInfo.avatarUrl = res3.profile.avatarUrl
+                    })
+                    this.loading = false
+                    this.registerDialog = false
+                  })
+                }
+              }).catch(() => {
+                this.loading = false
+              })
+            } else { // 没有注册过
+              // 走注册
+              this.registerDialog = false
+            }
+          })
+        } else {
+          console.log('error submit!!')
+          return false
+        }
+      })
     }
   }
 }
@@ -137,6 +237,7 @@ export default {
           text-overflow: ellipsis;
           white-space: nowrap;
           font-size: 12px;
+          vertical-align: middle;
         }
       }
       .el-icon-caret-bottom {
@@ -161,6 +262,28 @@ export default {
       -webkit-app-region: no-drag;
       i:first-child {
         margin-right: 10px;
+      }
+    }
+  }
+  ::v-deep.el-dialog--center {
+    .el-dialog__body {
+      padding: 10px 25px 0px !important;
+      .pic {
+        width: 80%;
+        height: 80%;
+        margin: 0 auto;
+      }
+      .registerFrom {
+        .el-form-item {
+          .el-input {
+            .el-input__inner {
+              color: #6a60a9;
+              &:focus {
+                border-color: #6a60a9 !important;
+              }
+            }
+          }
+        }
       }
     }
   }
