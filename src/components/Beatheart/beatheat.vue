@@ -1,6 +1,6 @@
 
 <template>
-  <div :class="favorate?'heart heartAnimation':'heartl heart'" @click="changeHeart" />
+  <div :class="[favorate?'heart heartr':'heartl heart', beat&&'heartAnimation']" @click="changeHeart" />
 </template>
 <script>
 export default {
@@ -13,12 +13,18 @@ export default {
   },
   data() {
     return {
+      beat: false
     }
   },
   mounted() {
   },
   methods: {
     changeHeart() {
+      if (!this.favorate) {
+        this.beat = true
+      } else {
+        this.beat = false
+      }
       this.$emit('changeBeat', this.beat)
     }
   }
@@ -72,5 +78,8 @@ export default {
 }
 .heartl {
   background-position: left;
+}
+.heartr {
+  background-position: right;
 }
 </style>

@@ -75,7 +75,9 @@ class PlayStore extends Store {
       if (item.id === id) {
         item.favorate = !item.favorate
       }
+      return item
     })
+    console.log(this._plays)
     return this.savePlays()
   }
 

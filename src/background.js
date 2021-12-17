@@ -5,8 +5,12 @@ import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
 const isDevelopment = process.env.NODE_ENV !== 'production'
 
-const DataStore = require('./store/PlayStore')
-const PlayStore = new DataStore({ name: 'Music Data' })
+const PlayStore = require('./store/PlayStore')
+const Playstore = new PlayStore({ name: 'Music Data' })
+
+// 引入update.js
+import { updateHandle } from './utils/update'
+
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win
@@ -15,10 +19,6 @@ let win
 protocol.registerSchemesAsPrivileged([
   { scheme: 'app', privileges: { secure: true, standard: true }}
 ])
-
-try {
-  require('electron-reloader')(module)
-} catch { }
 
 async function createWindow() {
   // Create the browser window.
@@ -29,17 +29,13 @@ async function createWindow() {
     resizable: false, // 窗口是否可调整大小
     center: true, // 在屏幕中心显示窗口
     webPreferences: {
-
-      // Use pluginOptions.nodeIntegration, leave this alone
-      // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
-      // nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
       nodeIntegration: true,
       contextIsolation: false,
       webSecurity: false // 重要突破audio不能播放本地音乐的限制！！！
     }
   })
   win.webContents.on('did-finish-load', () => {
-    win.send('getPlays', PlayStore.getPlays()) // 发送完成渲染事件
+    win.send('getPlays', Playstore.getPlays()) // 发送完成渲染事件
   })
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
@@ -53,6 +49,12 @@ async function createWindow() {
   win.on('closed', () => {
     win = null
   })
+
+  // 设置版本更新地址，即将打包后的latest.yml文件和exe文件同时放在
+  // http://xxxx/test/version/对应的服务器目录下,该地址和package.json的publish中的url保持一致
+  const uploadUrl = `http://127.0.0.1:5078/dist_electron/` // 服务器更新包位置
+  // 检测版本更新
+  updateHandle(win, uploadUrl)
 }
 
 // Quit when all windows are closed.

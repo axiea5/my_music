@@ -2,7 +2,7 @@
   <div class="playbar df between">
     <div class="df flex1 singInfo">
       <!-- 音乐图片 -->
-      <div class="pic mr10" @click="showLry">
+      <div class="pic" @click="showLry">
         <img :class="rotate&&'rotate'" :src="song.picUrl?song.picUrl:require('../../assets/images/music.jpg')">
         <i class="el-icon-arrow-up" />
       </div>
@@ -122,6 +122,7 @@ export default {
     },
     changeBeat() {
       this.$playStore.editFavorate(this.song.id)
+      this.songList = this.$playStore.getPlays()
     },
     showLry() {
       // 歌词页面
@@ -221,6 +222,7 @@ export default {
     overflow: hidden;
     border: 1px solid #9e9e9e;
     position: relative;
+    margin-right: 10px;
     img {
       width: 100%;
       height: 100%;
@@ -280,6 +282,7 @@ export default {
   }
   .songList {
     bottom: 80px !important;
+    top: 60px !important;
   }
   .drawerContent {
     #el-drawer__title {

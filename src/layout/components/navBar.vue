@@ -19,9 +19,11 @@
     <!-- 右边 -->
     <div class="right center">
       <!-- 消息 -->
-      <el-badge is-dot class="message mr10">
+      <el-badge is-dot class="message mr15">
         <i class="el-icon-message" />
       </el-badge>
+      <!-- 设置 -->
+      <i class="el-icon-setting message mr15" @click="goUrl" />
       <!-- 用户 -->
       <div v-if="haslog" class="user center">
         <el-avatar size="small" class="avatar" :src="userInfo.avatarUrl" />
@@ -31,7 +33,7 @@
           </p>
           <el-dropdown-menu slot="dropdown">
             <el-dropdown-item command="info">个人信息</el-dropdown-item>
-            <el-dropdown-item command="set">设置</el-dropdown-item>
+            <el-dropdown-item command="vip">会员</el-dropdown-item>
             <el-dropdown-item command="out">退出</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
@@ -164,6 +166,9 @@ export default {
           return false
         }
       })
+    },
+    goUrl() {
+      this.$router.push('/seting_music')
     }
   }
 }

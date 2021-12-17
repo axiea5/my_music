@@ -2,7 +2,7 @@
   <section class="app-main">
     <!-- 左侧导航 -->
     <div class="leftBar">
-      <div v-for="(item,index) in list" :key="item.url" class="list-item" :class="itemIndex===index&&'currentItem'" @click="clickItem(index,item.url)">
+      <div v-for="(item,index) in list" :key="item.url" class="list-item" :class="key===item.url&&'currentItem'" @click="clickItem(index,item.url)">
         <i class="iconfont" :class="item.icon" />
         <span>{{ item.text }}</span>
       </div>
@@ -24,18 +24,17 @@ export default {
         { icon: 'icon-shoucang', text: '我的收藏', url: '/collect_music' },
         { icon: 'icon-bofanggedan', text: '我的歌单', url: '/list_music' },
         { icon: 'icon-xiazai', text: '下载管理', url: '/load_music' }
-      ],
-      itemIndex: 0
+      ]
     }
   },
   computed: {
     key() {
+      console.log(this.$route.path)
       return this.$route.path
     }
   },
   methods: {
     clickItem(index, url) {
-      this.itemIndex = index
       this.$router.push(url)
     }
   }
