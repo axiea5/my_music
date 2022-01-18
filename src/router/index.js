@@ -32,6 +32,10 @@ const routes = [
     path: '/seting_music',
     component: () => import('@/views/setingMusic/index'),
     meta: { title: '设置' }
+  }, {
+    path: '/search_music',
+    component: () => import('@/views/searchMusic/index'),
+    meta: { title: '搜索' }
   },
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/local_music', hidden: true }

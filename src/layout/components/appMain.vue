@@ -24,13 +24,13 @@ export default {
         { icon: 'icon-shoucang', text: '我的收藏', url: '/collect_music' },
         { icon: 'icon-bofanggedan', text: '我的歌单', url: '/list_music' },
         { icon: 'icon-xiazai', text: '下载管理', url: '/load_music' }
-      ]
+      ],
+      key: 1
     }
   },
-  computed: {
-    key() {
-      console.log(this.$route.path)
-      return this.$route.path
+  watch: {
+    '$route': function(newUrl, oldUrl) {
+      this.key = new Date().getTime()
     }
   },
   methods: {
@@ -55,7 +55,7 @@ export default {
   height: calc(100vh - 140px);
   position: relative;
   overflow: hidden;
-  display:flex;
+  display: flex;
   .leftBar {
     width: 200px;
     height: 100%;

@@ -14,7 +14,7 @@
           <i class="el-icon-arrow-right" />
         </div>
       </div>
-      <el-input v-model="search" placeholder="搜索" prefix-icon="el-icon-search" />
+      <el-input v-model="search" placeholder="搜索" prefix-icon="el-icon-search" @keyup.enter.native="getSearch" />
     </div>
     <!-- 右边 -->
     <div class="right center">
@@ -88,7 +88,6 @@ export default {
           { required: true, message: '请输入密码', trigger: 'blur' }
         ]
       },
-      search: '',
       haslog: true,
       registerDialog: false,
       form: {
@@ -96,7 +95,8 @@ export default {
         password: ''
       },
       loading: false,
-      userInfo: {}
+      userInfo: {},
+      search: ''
     }
   },
   created() {
@@ -169,6 +169,9 @@ export default {
     },
     goUrl() {
       this.$router.push('/seting_music')
+    },
+    getSearch() {
+      this.$router.push({ path: '/search_music', query: { keywords: this.search }})
     }
   }
 }

@@ -19,3 +19,18 @@ export function checkPhone(data) {
 export function account(data) {
   return http.post('/user/account?timestamp=' + new Date().getTime(), data)
 }
+
+// 搜索
+export function search(data) {
+  return http.post('/cloudsearch?timestamp=' + new Date().getTime(), data)
+}
+
+// 获取音乐 url
+export function getSongUrl(id) {
+  return http.get('/song/url', { params: id })
+}
+
+// 收藏/取消收藏专辑
+export function collectSong(data) {
+  return http.post('/album/sub?timestamp=' + new Date().getTime(), data)
+}
